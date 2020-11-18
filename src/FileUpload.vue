@@ -12,107 +12,109 @@
 </template>
 
 <script>
-import FileUpload from './FileUpload.js'
+import FileUpload from "./FileUpload.js";
+import { toHumanlySize } from "./utils";
 
 export default {
   props: {
     url: { type: String, required: true },
     thumbUrl: { type: Function, default: () => {} },
-    accept: { type: String, default: '.png,.jpg' },
-    headers: {
-      type: Object,
-      default: () => {
-        return {}
-      }
-    },
-    btnLabel: { type: String, default: 'Select a file' },
-    btnUploadingLabel: { type: String, default: 'Uploading file' },
+    accept: { type: String, default: ".png,.jpg" },
+    headers: { type: Object, default: () => ({}) },
+    btnLabel: { type: String, default: "Select a file" },
+    btnUploadingLabel: { type: String, default: "Uploading file" },
     maxSize: { type: Number, default: 15728640 }, // 15Mb
-    additionalData: {
-      type: Object,
-      default: () => {
-        return {}
-      }
+    additionalData: { type: Object, default: () => ({}) },
+    paramName: { type: String, default: "file" },
+    requestType: { type: String, default: "POST" },
+    uniqueId: {
+      type: String,
+      default: Math.floor(Math.random() * 100).toString(),
     },
-    requestType: { type: String, default: 'POST' },
-    uniqueId: { type: String, default: '000' }
   },
   data() {
     return {
       progress: 0,
-      anexo: {}
-    }
+      anexo: {},
+    };
   },
   computed: {
     uploading() {
-      return this.progress > 0
+      return this.progress > 0;
     },
     progressStyle() {
       return {
         width: `${this.progress}%`,
-        display: this.uploading ? 'block' : 'none'
-      }
+        display: this.uploading ? "block" : "none",
+      };
     },
     inputWrapperStyle() {
-      return { opacity: this.uploading ? '0.7' : '1' }
+      return { opacity: this.uploading ? "0.7" : "1" };
     },
     fileUploadInputName() {
-      return 'file-upload-input' + this.uniqueId
-    }
+      return "file-upload-input" + this.uniqueId;
+    },
   },
   methods: {
     onChangeInputFile(e) {
-      let files = e.target.files || e.dataTransfer.files
-      if (!files.length) return
-      const file = files[0]
+      let files = e.target.files || e.dataTransfer.files;
+      if (!files.length) return;
+      const file = files[0];
       if (file.size > this.maxSize) {
-        this.$emit('error', {
-          code: 'max_size_exceded',
-          message: `File max size exceded, upload a file smaller than ${this
-            .maxSize}`
-        })
-        return
+        this.$emit("error", {
+          code: "max_size_exceded",
+          message: `File max size exceded, upload a file smaller than ${toHumanlySize(
+            this.maxSize
+          )}`,
+        });
+        return;
       }
 
-      this.upload(file)
+      this.upload(file);
     },
 
     upload(file) {
-      this.progress = 0.1
-      let fileUpload = new FileUpload(this.url, this.headers, this.onProgress, this.requestType)
+      this.progress = 0.1;
+      let fileUpload = new FileUpload(
+        this.url,
+        this.headers,
+        this.onProgress,
+        this.requestType,
+        this.paramName
+      );
       fileUpload
         .upload(file, this.additionalData)
-        .then(e => {
-          this.anexo = e.target.response
-          this.onChangeAnexo()
-          this.$emit('success', e)
-          this.progress = 0
-          this.cleanInput()
+        .then((e) => {
+          this.anexo = e.target.response;
+          this.onChangeAnexo();
+          this.$emit("success", e);
+          this.progress = 0;
+          this.cleanInput();
         })
-        .catch(e => {
-          this.$emit('error', e)
-          this.progress = 0
-          this.cleanInput()
-        })
+        .catch((e) => {
+          this.$emit("error", e);
+          this.progress = 0;
+          this.cleanInput();
+        });
     },
 
     cleanInput() {
-      let input = this.$refs.input
+      let input = this.$refs.input;
       if (input) {
-        input.value = ''
+        input.value = "";
       }
     },
 
     onProgress(e) {
-      this.progress = parseInt(e.loaded * 100 / e.total)
-      this.$emit('progress', this.progress)
+      this.progress = parseInt((e.loaded * 100) / e.total);
+      this.$emit("progress", this.progress);
     },
 
     onChangeAnexo() {
-      this.$emit('change', this.anexo)
-    }
-  }
-}
+      this.$emit("change", this.anexo);
+    },
+  },
+};
 </script>
 
 <style lang="stylus">
